@@ -6,12 +6,12 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>3.3.0</version>
-		<relativePath/> <!-- lookup parent from com.example.user_service.repository -->
+		<relativePath/> <!-- lookup parent from com.example.user.repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>user-service</artifactId>
+	<artifactId>user</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>user-com.example.user_service.services</name>
+	<name>user-com.example.user.services</name>
 	<description>microservice for user authentication</description>
 	<properties>
 		<java.version>17</java.version>

@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from com.example.eurekaserver.repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>user-service</artifactId>
+	<artifactId>eurekaserver</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>user-com.example.eurekaserver.services</name>
 	<description>microservice for user authentication</description>
