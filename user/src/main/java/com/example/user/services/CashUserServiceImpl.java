@@ -9,6 +9,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,15 +28,7 @@ public class CashUserServiceImpl implements CashUserService{
         log.info("AccountsServiceImpl instantiated.");
     }
 
-    @Override
-    public CashUserDTO getByName(String name){
 
-        CashUser user = cashUserRepository.findByName(name).get(0);
-        if (user == null){
-            throw new RuntimeException("User not found!");
-        }
-        return modelMapper.map(user, CashUserDTO.class);
-    }
 
     @Override
     public List<CashUserDTO> getAll(){
@@ -43,10 +36,25 @@ public class CashUserServiceImpl implements CashUserService{
     }
 
     @Override
+    public CashUserDTO getByName(String name){
+
+        Optional<CashUser> user = cashUserRepository.findByName(name);
+        if (user.isEmpty()){
+            throw new CashUserNotFoundException("The user with name " + name + " not found.");
+        }
+        return modelMapper.map(user, CashUserDTO.class);
+    }
+
+    @Override
+    public CashUserDTO getById(Long id){
+        CashUser user = cashUserRepository.getReferenceById(id);
+        return modelMapper.map(user, CashUserDTO.class);
+    }
+    @Override
     public CashUserDTO createAccount(CashUserDTO cashUserDTO) {
 
-
-        if(!cashUserRepository.findByName(cashUserDTO.getName()).isEmpty()){
+        Optional<CashUser> optUser = cashUserRepository.findByName(cashUserDTO.getName());
+        if(optUser.isPresent()){
             throw new CashUserNotFoundException("The user with name " + cashUserDTO.getName() + " already exists.");
         }
 

@@ -7,12 +7,13 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.hateoas.RepresentationModel;
 
 @Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class CashUserDTO {
+public class CashUserDTO extends RepresentationModel<CashUserDTO> {
 
     private long id;
 

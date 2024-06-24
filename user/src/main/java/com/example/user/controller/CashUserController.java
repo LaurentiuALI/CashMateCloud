@@ -5,20 +5,23 @@ import com.example.user.exceptions.CashUserNotFoundException;
 import com.example.user.services.CashUserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 @RestController
 @Slf4j
+@RequestMapping("/user")
 public class CashUserController {
     private final CashUserService cashUserService;
 
@@ -27,11 +30,31 @@ public class CashUserController {
     }
 
 
-    @GetMapping("/users")
-    public List<CashUserDTO> getUsers(){
-        return cashUserService.getAll();
+    @GetMapping(value="/list")
+    public CollectionModel<CashUserDTO> findAll() {
+
+        List<CashUserDTO> users = cashUserService.getAll();
+        for(CashUserDTO user: users){
+            Link selfLink = linkTo(methodOn(CashUserController.class)
+                    .findById(user.getId())).withSelfRel();
+            user.add(selfLink);
+        }
+
+        Link link = linkTo(methodOn(CashUserController.class).findAll()).withSelfRel();
+        CollectionModel<CashUserDTO> result = CollectionModel.of(users, link);
+        return result;
     }
 
+    @GetMapping("/{id}")
+    public CashUserDTO findById(@PathVariable Long id){
+        CashUserDTO user = cashUserService.getById(id);
+        Link selfLink = linkTo(methodOn(CashUserController.class)
+                .findById(user.getId())).withSelfRel();
+
+        user.add(selfLink);
+
+        return user;
+    }
 
     @PostMapping("/register")
     public ResponseEntity<Object> register(@Valid @RequestBody CashUserDTO user, BindingResult bindingResult) {
