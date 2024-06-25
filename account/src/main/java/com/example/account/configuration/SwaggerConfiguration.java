@@ -14,8 +14,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SwaggerConfiguration {
 
-    //http://localhost:8081/swagger-ui/index.html
-    @Value("http://localhost:8080")
+    //http://localhost:8083/swagger-ui/index.html
+    @Value("http://localhost:8083")
     private String devUrl;
 
     @Bean
@@ -32,10 +32,10 @@ public class SwaggerConfiguration {
         License mitLicense = new License().name("MIT License").url("https://choosealicense.com/licenses/mit/");
 
         Info info = new Info()
-                .title("Workout Planning API")
+                .title("Account Service")
                 .version("1.0")
                 .contact(contact)
-                .description("This API exposes endpoints to plan activities and workouts.").termsOfService("https://www.example.com/terms")
+                .description("").termsOfService("https://www.example.com/terms")
                 .license(mitLicense);
 
         return new OpenAPI().info(info).servers(List.of(devServer));
