@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -59,7 +58,6 @@ public class AccountsServiceImpl implements AccountsService{
         }
     }
 
-
     @Override
     public List<AccountDTO> getAllAccountsOwnedByUser(long userID) {
 
@@ -68,6 +66,15 @@ public class AccountsServiceImpl implements AccountsService{
         accounts = accounts.stream().filter(account -> account.getUser_id() == userID).collect(Collectors.toList());
 
         return accounts.stream().map(account -> modelMapper.map(account, AccountDTO.class)).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CashUserDTO> getAllAccountMembers(long accountID) {
+
+        List<Long> userIDs = userAccountRepository.findUserIDByAccountId(accountID);
+
+        return userIDs.stream().map(cashUserServiceProxy::findById).collect(Collectors.toList());
+
     }
 
     @Override
@@ -81,8 +88,12 @@ public class AccountsServiceImpl implements AccountsService{
     }
 
     @Override
-    public CashUserDTO getAccountOwner(AccountDTO account) {
-        return null;
+    public CashUserDTO getAccountOwner(long accountId) {
+        Optional<Account> account = accountRepository.findById(accountId);
+        if(account.isEmpty()){
+            throw new ResourceNotFoundException("Account with id " + accountId + " not found.");
+        }
+        return cashUserServiceProxy.findById(account.get().getUser_id());
     }
 
     @Override
@@ -91,7 +102,9 @@ public class AccountsServiceImpl implements AccountsService{
         accountDTO.setUser_id(userID);
         Account account = modelMapper.map(accountDTO, Account.class);
         accountRepository.save(account);
-        return accountDTO;
+
+
+        return modelMapper.map(account, AccountDTO.class);
     }
 
     @Override
@@ -107,9 +120,13 @@ public class AccountsServiceImpl implements AccountsService{
 
     @Override
     public List<CashUserDTO> getAccountMembers(long accountID) {
+        Optional<Account> account = accountRepository.findById(accountID);
+
+        if(account.isEmpty()){
+            throw new ResourceNotFoundException("Account with id " + accountID + " not found.");
+        }
 
         List<CashUserDTO> users;
-
         users = userAccountRepository.findUserIDByAccountId(accountID).stream().map(
                 cashUserServiceProxy::findById
         ).toList();
@@ -119,17 +136,46 @@ public class AccountsServiceImpl implements AccountsService{
 
     @Override
     public AccountDTO getById(long accountID) {
-        return null;
+
+        Optional<Account> account = accountRepository.findById(accountID);
+
+        if(account.isEmpty()){
+            throw new ResourceNotFoundException("Account with id " + accountID + " not found.");
+        }
+        return modelMapper.map(account.get(), AccountDTO.class);
     }
 
     @Override
-    public AccountDTO updateAccount(AccountDTO accountDTO) {
-        return null;
+    public AccountDTO updateAccount(long accountID, String name){
+        log.info("Updating account with id: {}", accountID);
+        Optional<Account> accountOpt = accountRepository.findById(accountID);
+
+        if(accountOpt.isPresent()){
+            Account account = accountOpt.get();
+            account.setName(name);
+            Account updatedAccount = accountRepository.save(account);
+            return modelMapper.map(updatedAccount, AccountDTO.class);
+        } else {
+            log.error("Cannot update account. Account with ID {} was not found", accountID);
+            throw new ResourceNotFoundException("Account with ID " + accountID + " was not found");
+        }
     }
 
     @Override
-    public String removeAccountMember(long accountID, long ownerID, long userID) {
-        return "";
+    public String removeAccountMember(long accountID, long userID) {
+        Optional<Account> account = accountRepository.findById(accountID);
+
+        if(account.isEmpty()){
+            throw new ResourceNotFoundException("Account with id " + accountID + " not found.");
+        }
+
+        if(userAccountRepository.findUserIDByAccountId(accountID).contains(userID)){
+            userAccountRepository.deleteByAccountIdAndUserId(accountID, userID);
+        } else{
+            throw new ResourceNotFoundException("Account with id " + accountID + " don't have user with id " + userID + " among members.");
+        }
+
+        return "Member removed successfully.";
     }
 
     @Override

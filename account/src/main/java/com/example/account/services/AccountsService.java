@@ -9,25 +9,21 @@ import java.util.Set;
 
 public interface AccountsService {
     AccountDTO createAccount(AccountDTO accountDTO, Long userID);
+    AccountDTO getById(long accountID);
     List<AccountDTO> getAll();
-
+    AccountDTO updateAccount(long accountID, String name);
+    void removeAccount(long accountID);
+    CashUserDTO getAccountOwner(long account);
 
     void addAccountMember(long accountID, Long userID);
 
-
-
     List<AccountDTO> getAllAccountsOwnedByUser(long userID);
+    List<CashUserDTO> getAllAccountMembers(long accountID);
     List<AccountDTO> getAllAccountsOwnedAndParticipantByUser(long userID);
     Page<AccountDTO> getAllAccountsOwnedAndParticipantByUser(long userID, int page, int size);
-    CashUserDTO getAccountOwner(AccountDTO account);
-
 
     List<CashUserDTO> getAccountMembers(long accountID);
-    AccountDTO getById(long accountID);
 
-    AccountDTO updateAccount(AccountDTO accountDTO);
-
-    String removeAccountMember(long accountID, long ownerID, long userID);
-    void removeAccount(long accountID);
+    String removeAccountMember(long accountID, long userID);
 
 }
