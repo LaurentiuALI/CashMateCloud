@@ -9,4 +9,5 @@ public interface CashUserService {
     CashUserDTO getByName(String name);
     CashUserDTO createAccount(CashUserDTO cashUserDTO);
     List<CashUserDTO> getAll();
+    CashUserDTO getById(Long id);
 }
