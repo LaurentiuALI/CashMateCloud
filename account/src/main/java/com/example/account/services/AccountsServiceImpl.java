@@ -14,6 +14,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -39,9 +40,10 @@ public class AccountsServiceImpl implements AccountsService{
     }
 
     @Override
-    public void addAccountMember(long accountID, Long userID) {
+    public void addAccountMember(@RequestHeader("cashmate-id")
+                                     String correlationId, long accountID, Long userID) {
         log.info("Adding member to account: accountID={}, userId={}", accountID, userID);
-        CashUserDTO user = cashUserServiceProxy.findById(userID);
+        CashUserDTO user = cashUserServiceProxy.findById(correlationId, userID);
 
         if(user == null){
             throw new CashUserNotFoundException("Couldn't find user to associate!");
@@ -69,11 +71,12 @@ public class AccountsServiceImpl implements AccountsService{
     }
 
     @Override
-    public List<CashUserDTO> getAllAccountMembers(long accountID) {
+    public List<CashUserDTO> getAllAccountMembers(@RequestHeader("cashmate-id")
+                                                      String correlationId, long accountID) {
 
         List<Long> userIDs = userAccountRepository.findUserIDByAccountId(accountID);
 
-        return userIDs.stream().map(cashUserServiceProxy::findById).collect(Collectors.toList());
+        return userIDs.stream().map(userId -> cashUserServiceProxy.findById(correlationId, userId)).collect(Collectors.toList());
 
     }
 
@@ -88,12 +91,13 @@ public class AccountsServiceImpl implements AccountsService{
     }
 
     @Override
-    public CashUserDTO getAccountOwner(long accountId) {
+    public CashUserDTO getAccountOwner(@RequestHeader("cashmate-id")
+                                           String correlationId, long accountId) {
         Optional<Account> account = accountRepository.findById(accountId);
         if(account.isEmpty()){
             throw new ResourceNotFoundException("Account with id " + accountId + " not found.");
         }
-        return cashUserServiceProxy.findById(account.get().getUser_id());
+        return cashUserServiceProxy.findById(correlationId, account.get().getUser_id());
     }
 
     @Override
@@ -119,7 +123,8 @@ public class AccountsServiceImpl implements AccountsService{
     }
 
     @Override
-    public List<CashUserDTO> getAccountMembers(long accountID) {
+    public List<CashUserDTO> getAccountMembers(@RequestHeader("cashmate-id")
+                                                   String correlationId, long accountID) {
         Optional<Account> account = accountRepository.findById(accountID);
 
         if(account.isEmpty()){
@@ -128,7 +133,7 @@ public class AccountsServiceImpl implements AccountsService{
 
         List<CashUserDTO> users;
         users = userAccountRepository.findUserIDByAccountId(accountID).stream().map(
-                cashUserServiceProxy::findById
+                userId -> cashUserServiceProxy.findById(correlationId, userId)
         ).toList();
 
         return users;

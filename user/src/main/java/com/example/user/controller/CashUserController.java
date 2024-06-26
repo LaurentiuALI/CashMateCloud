@@ -31,25 +31,27 @@ public class CashUserController {
 
 
     @GetMapping(value="/list")
-    public CollectionModel<CashUserDTO> findAll() {
+    public CollectionModel<CashUserDTO> findAll(@RequestHeader("cashmate-id")
+                                                    String correlationId) {
 
         List<CashUserDTO> users = cashUserService.getAll();
         for(CashUserDTO user: users){
             Link selfLink = linkTo(methodOn(CashUserController.class)
-                    .findById(user.getId())).withSelfRel();
+                    .findById(correlationId, user.getId())).withSelfRel();
             user.add(selfLink);
         }
 
-        Link link = linkTo(methodOn(CashUserController.class).findAll()).withSelfRel();
+        Link link = linkTo(methodOn(CashUserController.class).findAll(correlationId)).withSelfRel();
         CollectionModel<CashUserDTO> result = CollectionModel.of(users, link);
         return result;
     }
 
     @GetMapping("/{id}")
-    public CashUserDTO findById(@PathVariable Long id){
+    public CashUserDTO findById(@RequestHeader("cashmate-id")
+                                    String correlationId, @PathVariable Long id){
         CashUserDTO user = cashUserService.getById(id);
         Link selfLink = linkTo(methodOn(CashUserController.class)
-                .findById(user.getId())).withSelfRel();
+                .findById(correlationId, user.getId())).withSelfRel();
 
         user.add(selfLink);
 
