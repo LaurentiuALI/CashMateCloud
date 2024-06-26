@@ -41,10 +41,11 @@ public class AccountController {
     }
 
     @GetMapping("/owner/{accountId}")
-    public ResponseEntity<Object> findAccountOwner(@PathVariable long accountId) {
+    public ResponseEntity<Object> findAccountOwner(@RequestHeader("cashmate-id")
+                                                       String correlationId, @PathVariable long accountId) {
         log.info("Retrieving owner for account ID: {}", accountId);
         try {
-            return new ResponseEntity<>(accountsService.getAccountOwner(accountId), HttpStatus.OK);
+            return new ResponseEntity<>(accountsService.getAccountOwner(correlationId, accountId), HttpStatus.OK);
         } catch (ResourceNotFoundException ex) {
             log.error("Account owner not found: {}", ex.getMessage());
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
@@ -52,10 +53,11 @@ public class AccountController {
     }
 
     @PostMapping("/create/{userID}")
-    public ResponseEntity<Object> createAccount(@RequestBody AccountDTO account, @PathVariable Long userID) {
+    public ResponseEntity<Object> createAccount(@RequestHeader("cashmate-id")
+                                                    String correlationId, @RequestBody AccountDTO account, @PathVariable Long userID) {
         log.info("Creating account for user ID: {}", userID);
         try {
-            CashUserDTO user = cashUserServiceProxy.findById(userID);
+            CashUserDTO user = cashUserServiceProxy.findById(correlationId, userID);
             if (user == null) {
                 log.error("User not found for ID: {}", userID);
                 return new ResponseEntity<>("No user found.", HttpStatus.BAD_REQUEST);
@@ -109,10 +111,11 @@ public class AccountController {
     }
 
     @PostMapping("/addMember/{accountId}/{userID}")
-    public ResponseEntity<Object> addMemberToAccount(@PathVariable Long accountId, @PathVariable Long userID) {
+    public ResponseEntity<Object> addMemberToAccount(@RequestHeader("cashmate-id")
+                                                         String correlationId, @PathVariable Long accountId, @PathVariable Long userID) {
         log.info("Adding member to account ID: {}", accountId);
         try {
-            accountsService.addAccountMember(accountId, userID);
+            accountsService.addAccountMember(correlationId, accountId, userID);
             AccountDTO account = accountsService.getById(accountId);
             EntityModel<AccountDTO> model = toModel(account, accountId);
             return new ResponseEntity<>(model, HttpStatus.OK);
@@ -126,10 +129,11 @@ public class AccountController {
     }
 
     @GetMapping("/members/{accountId}")
-    public ResponseEntity<Object> getMembersForAccount(@PathVariable Long accountId) {
+    public ResponseEntity<Object> getMembersForAccount(@RequestHeader("cashmate-id")
+                                                           String correlationId, @PathVariable Long accountId) {
         log.info("Retrieving members for account ID: {}", accountId);
         try {
-            List<String> response = accountsService.getAccountMembers(accountId).stream()
+            List<String> response = accountsService.getAccountMembers(correlationId, accountId).stream()
                     .map(CashUserDTO::getName)
                     .collect(Collectors.toList());
             return new ResponseEntity<>(response, HttpStatus.OK);
@@ -156,11 +160,11 @@ public class AccountController {
 
         model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AccountController.class).findAccount(accountDTO.getId())).withSelfRel());
         model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AccountController.class).findAll()).withRel("all-accounts"));
-        model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AccountController.class).createAccount(null, userId)).withRel("create-account"));
+        model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AccountController.class).createAccount(null, null, userId)).withRel("create-account"));
         model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AccountController.class).deleteAccount(accountDTO.getId())).withRel("delete-account"));
-        model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AccountController.class).addMemberToAccount(accountDTO.getId(), userId)).withRel("add-member"));
-        model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AccountController.class).findAccountOwner(accountDTO.getId())).withRel("account-owner"));
-        model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AccountController.class).getMembersForAccount(accountDTO.getId())).withRel("account-members"));
+        model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AccountController.class).addMemberToAccount(null, accountDTO.getId(), userId)).withRel("add-member"));
+        model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AccountController.class).findAccountOwner(null, accountDTO.getId())).withRel("account-owner"));
+        model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AccountController.class).getMembersForAccount(null, accountDTO.getId())).withRel("account-members"));
         model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AccountController.class).updateAccountName(accountDTO.getId(), accountDTO)).withRel("update-account-name"));
         model.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AccountController.class).removeMembersFromAccount(accountDTO.getId(), userId)).withRel("remove-member"));
 
