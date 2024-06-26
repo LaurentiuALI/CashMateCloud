@@ -6,6 +6,7 @@ import com.example.account.exceptions.CashUserNotFoundException;
 import com.example.account.exceptions.ResourceNotFoundException;
 import com.example.account.services.AccountsService;
 import com.example.account.services.CashUserServiceProxy;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.EntityModel;
@@ -53,22 +54,18 @@ public class AccountController {
     }
 
     @PostMapping("/create/{userID}")
+    @CircuitBreaker(name = "CircuitBreakerService", fallbackMethod = "fallback")
     public ResponseEntity<Object> createAccount(@RequestHeader("cashmate-id")
                                                     String correlationId, @RequestBody AccountDTO account, @PathVariable Long userID) {
         log.info("Creating account for user ID: {}", userID);
-        try {
-            CashUserDTO user = cashUserServiceProxy.findById(correlationId, userID);
-            if (user == null) {
-                log.error("User not found for ID: {}", userID);
-                return new ResponseEntity<>("No user found.", HttpStatus.BAD_REQUEST);
-            } else {
-                AccountDTO createdAccount = accountsService.createAccount(account, userID);
-                EntityModel<AccountDTO> model = toModel(createdAccount, userID);
-                return new ResponseEntity<>(model, HttpStatus.OK);
-            }
-        } catch (Exception ex) {
-            log.error("Error creating account: {}", ex.getMessage());
-            return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        CashUserDTO user = cashUserServiceProxy.findById(correlationId, userID);
+        if (user == null) {
+            log.error("User not found for ID: {}", userID);
+            return new ResponseEntity<>("No user found.", HttpStatus.BAD_REQUEST);
+        } else {
+            AccountDTO createdAccount = accountsService.createAccount(account, userID);
+            EntityModel<AccountDTO> model = toModel(createdAccount, userID);
+            return new ResponseEntity<>(model, HttpStatus.OK);
         }
     }
 
@@ -111,6 +108,7 @@ public class AccountController {
     }
 
     @PostMapping("/addMember/{accountId}/{userID}")
+    @CircuitBreaker(name = "CircuitBreakerService", fallbackMethod = "fallbackAddMember")
     public ResponseEntity<Object> addMemberToAccount(@RequestHeader("cashmate-id")
                                                          String correlationId, @PathVariable Long accountId, @PathVariable Long userID) {
         log.info("Adding member to account ID: {}", accountId);
@@ -171,4 +169,13 @@ public class AccountController {
         return model;
     }
 
+    public ResponseEntity<Object> fallback(String correlationId, AccountDTO account, Long userID, Throwable ex) {
+        log.info("Fallback executed due to: {}", ex.getMessage());
+        return new ResponseEntity<>("Could not create new account for user. Service is temporarily unavailable. Please try again later.", HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    public ResponseEntity<Object> fallbackAddMember(String correlationId, Long accountId, Long userID, Throwable ex) {
+        log.info("Fallback executed due to: {}", ex.getMessage());
+        return new ResponseEntity<>("Could not add new member to account. Service is temporarily unavailable. Please try again later.", HttpStatus.SERVICE_UNAVAILABLE);
+    }
 }

@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from com.example.gateway.repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>account</artifactId>
+	<artifactId>gateway</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>user-com.example.gateway.services</name>
 	<description>microservice for user authentication</description>
