@@ -5,6 +5,8 @@ import com.example.user.exceptions.CashUserNotFoundException;
 import com.example.user.services.CashUserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
@@ -23,17 +25,21 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @Slf4j
 @RequestMapping("/user")
 public class CashUserController {
+
+    @Autowired
+    Environment environment;
+
     private final CashUserService cashUserService;
 
     public CashUserController(CashUserService cashUserService) {
         this.cashUserService = cashUserService;
     }
 
-
     @GetMapping(value="/list")
     public CollectionModel<CashUserDTO> findAll(@RequestHeader("cashmate-id")
                                                     String correlationId) {
 
+        log.info(environment.getProperty("server.port"));
         List<CashUserDTO> users = cashUserService.getAll();
         for(CashUserDTO user: users){
             Link selfLink = linkTo(methodOn(CashUserController.class)
